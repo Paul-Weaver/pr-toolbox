@@ -13,8 +13,9 @@ var diskUsageCmd = &cobra.Command{
 	Short: "Show disk usage of the current directory",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Fprintln(cmd.OutOrStdout(), "Running diskUsageCmd") // Debug log
 		usage := du.NewDiskUsage(".")
-		fmt.Printf("%v\n", usage)
+		fmt.Fprintf(cmd.OutOrStdout(), "Free: %v\n", usage.Free())
 	},
 }
 
