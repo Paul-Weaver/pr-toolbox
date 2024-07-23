@@ -1,0 +1,6 @@
+- Implement slog logging
+- Add more tests
+- Add more features
+- Implement auto completion
+- Implement updates to gcs
+- Implement viper
