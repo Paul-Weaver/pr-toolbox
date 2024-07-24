@@ -15,7 +15,7 @@ import (
 // descriptionCmd represents the description command
 var DescriptionCmd = &cobra.Command{
 	Use:   "description",
-	Short: "A brief description of your command",
+	Short: "Create a PR description from a git diff",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		baseBranch, err := getBaseBranch()
@@ -35,8 +35,9 @@ var DescriptionCmd = &cobra.Command{
 			fmt.Print("Error generating PR description:", err)
 			return
 		}
-		fmt.Println("Generated PR Description (Markdown):")
-		fmt.Println(prDescription)
+
+		output := formatOutput(prDescription)
+		fmt.Println(output)
 	},
 }
 
@@ -79,18 +80,23 @@ func generatePRDescription(diff string) (string, error) {
 	}
 	client := openai.NewClient(apiKey)
 
-	prompt := fmt.Sprintf("Generate a concise pull request description in Markdown format for the following git diff:\n%s", diff)
+	prompt := fmt.Sprintf(`Generate a concise pull request description in Markdown format for the following git diff:
+%s
+
+Please include only the Summary and Changes sections in your response.
+Important: Do not include Markdown fencing in your response.`, diff)
 
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model: openai.GPT4o,
+			Model: "gpt-4o-mini",
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleUser,
 					Content: prompt,
 				},
 			},
+			MaxTokens: 1024,
 		},
 	)
 
@@ -100,4 +106,13 @@ func generatePRDescription(diff string) (string, error) {
 	}
 
 	return resp.Choices[0].Message.Content, nil
+}
+
+func formatOutput(prDescription string) string {
+	return fmt.Sprintf(`
+Generated PR Description:
+------------------------------------------------------
+%s
+------------------------------------------------------
+`, prDescription)
 }
