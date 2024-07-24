@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/cobra"
@@ -17,7 +18,13 @@ var DescriptionCmd = &cobra.Command{
 	Short: "A brief description of your command",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		diff, err := getGitDiff()
+		baseBranch, err := getBaseBranch()
+		if err != nil {
+			fmt.Println("Error determining base branch:", err)
+			return
+		}
+
+		diff, err := getGitDiff(baseBranch)
 		if err != nil {
 			fmt.Print("Error getting git diff:", err)
 			return
@@ -36,8 +43,26 @@ var DescriptionCmd = &cobra.Command{
 func init() {
 }
 
-func getGitDiff() (string, error) {
-	cmd := exec.Command("git", "diff", "master")
+func getBaseBranch() (string, error) {
+	cmd := exec.Command("git", "branch", "-l", "master", "main")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	output := strings.TrimSpace(out.String())
+	if strings.Contains(output, "master") {
+		return "master", nil
+	}
+	if strings.Contains(output, "main") {
+		return "main", nil
+	}
+	return "", fmt.Errorf("neither 'master' nor 'main' branches exist")
+}
+
+func getGitDiff(baseBranch string) (string, error) {
+	cmd := exec.Command("git", "diff", baseBranch)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
