@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var detailLevel int
+
 // descriptionCmd represents the description command
 var DescriptionCmd = &cobra.Command{
 	Use:   "description",
@@ -57,6 +59,8 @@ var DescriptionCmd = &cobra.Command{
 }
 
 func init() {
+	// Define the detail level flag with a default value of 1 (medium detail)
+	DescriptionCmd.Flags().IntVarP(&detailLevel, "detail-level", "d", 1, "detail level for the PR description (0, 1, 2)")
 }
 
 func generatePRDescription(diff string) (string, error) {
@@ -65,6 +69,17 @@ func generatePRDescription(diff string) (string, error) {
 		fmt.Println("OPENAI_API_KEY environment variable is not set")
 	}
 	client := openai.NewClient(apiKey)
+
+	// Adjust max tokens based on detail level
+	var maxTokens int
+	switch detailLevel {
+	case 0:
+		maxTokens = 256 // low detail
+	case 2:
+		maxTokens = 2048 // high detail
+	default:
+		maxTokens = 1024 // medium detail
+	}
 
 	prompt := fmt.Sprintf(`Generate a concise pull request description in Markdown format for the following git diff:
 %s
@@ -82,7 +97,7 @@ Important: Do not include Markdown fencing in your response.`, diff)
 					Content: prompt,
 				},
 			},
-			MaxTokens: 1024,
+			MaxTokens: maxTokens,
 		},
 	)
 
