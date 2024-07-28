@@ -27,9 +27,10 @@ var DescriptionCmd = &cobra.Command{
 		// Debug statement: Base branch
 		fmt.Printf("Determined base branch: %s\n", baseBranch)
 
+		// Generate the diff
 		diff, err := gitutils.GetGitDiff(baseBranch)
 		if err != nil {
-			fmt.Println("Error getting git diff:", err)
+			fmt.Println("Error generating git diff:", err)
 			return
 		}
 
