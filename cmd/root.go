@@ -7,8 +7,6 @@ import (
 	"os"
 
 	"github.com/Paul-Weaver/pr-toolbox/cmd/description"
-	"github.com/Paul-Weaver/pr-toolbox/cmd/info"
-	"github.com/Paul-Weaver/pr-toolbox/cmd/net"
 	"github.com/spf13/cobra"
 )
 
@@ -37,8 +35,6 @@ func Execute() {
 }
 
 func addSubcommandPalettes() {
-	rootCmd.AddCommand(net.NetCmd)
-	rootCmd.AddCommand(info.InfoCmd)
 	rootCmd.AddCommand(description.DescriptionCmd)
 }
 func init() {
