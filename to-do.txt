@@ -4,3 +4,5 @@
 - Implement auto completion
 - Implement updates to gcs
 - Implement viper
+- Command that adds auto commit message
+

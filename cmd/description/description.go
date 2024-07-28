@@ -16,39 +16,23 @@ var DescriptionCmd = &cobra.Command{
 	Short: "Create a PR description from a git diff",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Debug statement: Start of command
-		fmt.Println("Starting description command")
-
 		baseBranch, err := gitutils.GetBaseBranch()
 		if err != nil {
-			fmt.Println("Error determining base branch:", err)
+			fmt.Print("Error getting base branch:", err)
 			return
 		}
-		// Debug statement: Base branch
-		fmt.Printf("Determined base branch: %s\n", baseBranch)
 
 		diff, err := gitutils.GetGitDiff(baseBranch)
 		if err != nil {
-			fmt.Println("Error getting git diff:", err)
+			fmt.Print("Error getting git diff:", err)
 			return
 		}
-
-		// Check if the diff is empty
-		if diff == "" {
-			fmt.Println("No changes detected. Please commit changes before generating a PR description.")
-			return
-		}
-
-		// Debug statement: Git diff
-		fmt.Printf("Generated git diff:\n%s\n", diff)
 
 		prDescription, err := generatePRDescription(diff)
 		if err != nil {
-			fmt.Println("Error generating PR description:", err)
+			fmt.Print("Error generating PR description:", err)
 			return
 		}
-		// Debug statement: PR description
-		fmt.Printf("Generated PR description:\n%s\n", prDescription)
 
 		output := formatOutput(prDescription)
 		fmt.Println(output)
