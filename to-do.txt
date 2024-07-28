@@ -6,3 +6,8 @@
 - Implement viper
 - Command that adds auto commit message
 
+
+
+CAVEATS 
+- Need to fetch latest changes from remote 
+- Need to commit changes
