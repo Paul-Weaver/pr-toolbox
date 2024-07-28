@@ -45,7 +45,7 @@ var DescriptionCmd = &cobra.Command{
 		// Debug statement: Git diff
 		fmt.Printf("Generated git diff:\n%s\n", diff)
 
-		prDescription, err := generatePRDescription(diff)
+		prDescription, err := generatePRDescription(diff, detailLevel)
 		if err != nil {
 			fmt.Println("Error generating PR description:", err)
 			return
@@ -63,29 +63,40 @@ func init() {
 	DescriptionCmd.Flags().IntVarP(&detailLevel, "detail-level", "d", 1, "detail level for the PR description (0, 1, 2)")
 }
 
-func generatePRDescription(diff string) (string, error) {
+// GeneratePRDescription generates a pull request description from a git diff
+func generatePRDescription(diff string, detailLevel int) (string, error) {
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		fmt.Println("OPENAI_API_KEY environment variable is not set")
+		return "", fmt.Errorf("OPENAI_API_KEY environment variable is not set")
 	}
 	client := openai.NewClient(apiKey)
 
-	// Adjust max tokens based on detail level
+	// Adjust max tokens and prompt based on detail level
 	var maxTokens int
+	var prompt string
 	switch detailLevel {
 	case 0:
 		maxTokens = 256 // low detail
-	case 2:
-		maxTokens = 2048 // high detail
-	default:
-		maxTokens = 1024 // medium detail
-	}
-
-	prompt := fmt.Sprintf(`Generate a concise pull request description in Markdown format for the following git diff:
+		prompt = fmt.Sprintf(`Generate a brief pull request description in Markdown format for the following git diff:
 %s
 
-Please include only the Summary and Changes sections in your response.
+Please include a very brief Summary and Changes sections in your response.
 Important: Do not include Markdown fencing in your response.`, diff)
+	case 2:
+		maxTokens = 2048 // high detail
+		prompt = fmt.Sprintf(`Generate a detailed pull request description in Markdown format for the following git diff:
+%s
+
+Please include a comprehensive Summary and detailed Changes sections in your response.
+Important: Do not include Markdown fencing in your response.`, diff)
+	default:
+		maxTokens = 1024 // medium detail
+		prompt = fmt.Sprintf(`Generate a pull request description in Markdown format for the following git diff:
+%s
+
+Please include a concise Summary and Changes sections in your response.
+Important: Do not include Markdown fencing in your response.`, diff)
+	}
 
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
@@ -102,8 +113,7 @@ Important: Do not include Markdown fencing in your response.`, diff)
 	)
 
 	if err != nil {
-		fmt.Printf("ChatCompletion error: %v\n", err)
-		return "", err
+		return "", fmt.Errorf("ChatCompletion error: %v", err)
 	}
 
 	return resp.Choices[0].Message.Content, nil
