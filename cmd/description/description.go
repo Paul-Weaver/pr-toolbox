@@ -1,13 +1,11 @@
 package description
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 
+	"github.com/Paul-Weaver/pr-toolbox/cmd/internal/gitutils"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/cobra"
 )
@@ -18,13 +16,13 @@ var DescriptionCmd = &cobra.Command{
 	Short: "Create a PR description from a git diff",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		baseBranch, err := getBaseBranch()
+		baseBranch, err := gitutils.GetBaseBranch()
 		if err != nil {
-			fmt.Println("Error determining base branch:", err)
+			fmt.Print("Error getting base branch:", err)
 			return
 		}
 
-		diff, err := getGitDiff(baseBranch)
+		diff, err := gitutils.GetGitDiff(baseBranch)
 		if err != nil {
 			fmt.Print("Error getting git diff:", err)
 			return
@@ -42,35 +40,6 @@ var DescriptionCmd = &cobra.Command{
 }
 
 func init() {
-}
-
-func getBaseBranch() (string, error) {
-	cmd := exec.Command("git", "branch", "-l", "master", "main")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return "", err
-	}
-	output := strings.TrimSpace(out.String())
-	if strings.Contains(output, "master") {
-		return "master", nil
-	}
-	if strings.Contains(output, "main") {
-		return "main", nil
-	}
-	return "", fmt.Errorf("neither 'master' nor 'main' branches exist")
-}
-
-func getGitDiff(baseBranch string) (string, error) {
-	cmd := exec.Command("git", "diff", baseBranch)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return "", err
-	}
-	return out.String(), nil
 }
 
 func generatePRDescription(diff string) (string, error) {
